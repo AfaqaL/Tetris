@@ -1,5 +1,6 @@
 // Piece.java
 
+import java.awt.image.TileObserver;
 import java.util.*;
 
 /**
@@ -34,7 +35,28 @@ public class Piece {
 	 Makes its own copy of the array and the TPoints inside it.
 	*/
 	public Piece(TPoint[] points) {
-		// YOUR CODE HERE
+		body = new TPoint[points.length];
+		for (int i = 0; i < points.length; i++) {
+			body[i] = new TPoint(points[i]);
+		}
+		Map<Integer, Integer> skirtMap = new HashMap<>();
+		int maxH = -1, maxW = -1;
+
+		for(TPoint pt : body){
+			if(skirtMap.containsKey(pt.x)){
+				if(pt.y < skirtMap.get(pt.x)){ skirtMap.replace(pt.x, pt.y); }
+			}else{
+				skirtMap.put(pt.x, pt.y);
+			}
+			maxH = Math.max(maxH, pt.y);
+			maxW = Math.max(maxW, pt.x);
+		}
+		height = ++maxH;
+		width = ++maxW;
+		skirt = new int[maxW];
+		for (int i = 0; i < maxW; i++) {
+			skirt[i] = skirtMap.get(i);
+		}
 	}
 	
 
@@ -87,9 +109,16 @@ public class Piece {
 	 rotated from the receiver.
 	 */
 	public Piece computeNextRotation() {
-		// YOUR CODE HERE
-		return null; // YOUR CODE HERE
+		TPoint[] nextPts = new TPoint[body.length];
+
+		for (int i = 0; i < body.length; i++) {
+			int x = height - body[i].y - 1;
+			int y = body[i].x;
+			nextPts[i] = new TPoint(x, y);
+		}
+		return new Piece(nextPts);
 	}
+
 
 	/**
 	 Returns a pre-computed piece that is 90 degrees counter-clockwise
@@ -118,10 +147,22 @@ public class Piece {
 		// standard equals() technique 2
 		// (null will be false)
 		if (!(obj instanceof Piece)) return false;
+
 		Piece other = (Piece)obj;
-		
-		// YOUR CODE HERE
+		if(other.body.length != this.body.length) return false;
+
+		for(TPoint pt : other.body){
+			if(!inCurrBody(pt)) return false;
+		}
+
 		return true;
+	}
+
+	private boolean inCurrBody(TPoint pt){
+		for(TPoint curr : this.body){
+			if(curr.equals(pt)) return true;
+		}
+		return false;
 	}
 
 
@@ -153,22 +194,22 @@ public class Piece {
 	 until eventually getting back to the first rotation.
 	 (provided code)
 	*/
+
+
 	public static Piece[] getPieces() {
 		// lazy evaluation -- create static array if needed
 		if (Piece.pieces==null) {
 			// use makeFastRotations() to compute all the rotations for each piece
 			Piece.pieces = new Piece[] {
-				makeFastRotations(new Piece(STICK_STR)),
-				makeFastRotations(new Piece(L1_STR)),
-				makeFastRotations(new Piece(L2_STR)),
-				makeFastRotations(new Piece(S1_STR)),
-				makeFastRotations(new Piece(S2_STR)),
-				makeFastRotations(new Piece(SQUARE_STR)),
-				makeFastRotations(new Piece(PYRAMID_STR)),
+					makeFastRotations(new Piece(STICK_STR)),
+					makeFastRotations(new Piece(L1_STR)),
+					makeFastRotations(new Piece(L2_STR)),
+					makeFastRotations(new Piece(S1_STR)),
+					makeFastRotations(new Piece(S2_STR)),
+					makeFastRotations(new Piece(SQUARE_STR)),
+					makeFastRotations(new Piece(PYRAMID_STR)),
 			};
 		}
-		
-		
 		return Piece.pieces;
 	}
 	
@@ -187,10 +228,21 @@ public class Piece {
 	 to the first piece.
 	*/
 	private static Piece makeFastRotations(Piece root) {
-		// YOUR CODE HERE
-		return null; // YOUR CODE HERE
+		Piece curr = root;
+		Piece computation;
+
+		while(true){
+			computation = curr.computeNextRotation();
+
+			if(computation.equals(root)){
+				curr.next = root;
+				return root;
+			}
+			curr.next = computation;
+			curr = computation;
+		}
 	}
-	
+
 	
 
 	/**
